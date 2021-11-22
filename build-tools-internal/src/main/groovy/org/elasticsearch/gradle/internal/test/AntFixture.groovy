@@ -15,6 +15,7 @@ import org.elasticsearch.gradle.internal.test.Fixture
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.api.AntBuilder
 
 /**
  * A fixture for integration tests which runs in a separate process launched by Ant.
