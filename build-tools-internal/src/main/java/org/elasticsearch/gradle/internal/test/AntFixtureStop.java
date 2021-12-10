@@ -6,51 +6,53 @@
  * Side Public License, v 1.
  */
 
-package org.elasticsearch.gradle.internal
+package org.elasticsearch.gradle.internal.test;
 
-import org.apache.tools.ant.taskdefs.condition.Os
-import org.elasticsearch.gradle.LoggedExec
-import org.elasticsearch.gradle.internal.test.AntFixture
-import org.gradle.api.file.FileSystemOperations
-import org.gradle.api.tasks.Internal
+import org.apache.tools.ant.taskdefs.condition.Os;
+import org.elasticsearch.gradle.LoggedExec;
+import org.elasticsearch.gradle.internal.FixtureStop;
+import org.gradle.api.file.FileSystemOperations;
+import org.gradle.api.tasks.Internal;
 
-import javax.inject.Inject
+import javax.inject.Inject;
+import java.io.IOException;
 
 class AntFixtureStop extends LoggedExec implements FixtureStop {
 
     @Internal
-    AntFixture fixture
+    AntFixture fixture;
 
     @Internal
-    FileSystemOperations fileSystemOperations
+    FileSystemOperations fileSystemOperations;
 
     @Inject
     AntFixtureStop(FileSystemOperations fileSystemOperations) {
-        super(fileSystemOperations)
-        this.fileSystemOperations = fileSystemOperations
+        super(fileSystemOperations);
+        this.fileSystemOperations = fileSystemOperations;
     }
 
     void setFixture(AntFixture fixture) {
-        assert this.fixture == null
+        assert this.fixture == null;
         this.fixture = fixture;
-        final Object pid = "${ -> this.fixture.pid }"
-        onlyIf { fixture.pidFile.exists() }
-        doFirst {
-            logger.info("Shutting down ${fixture.name} with pid ${pid}")
+        onlyIf( task -> fixture.getPidFile().exists() );
+        String pid;
+        try {
+            pid = String.valueOf(fixture.getPid());
+        } catch (IOException e) {
+            getLogger().error("error getting pid from pidfile", e);
+            throw new RuntimeException(e);
         }
-
+        doFirst(
+            task -> getLogger().info("Shutting down ${fixture.name} with pid ${pid}")
+        );
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            executable = 'Taskkill'
-            args('/PID', pid, '/F')
+            setExecutable("Taskkill");
+            args("/PID", pid, "/F");
         } else {
-            executable = 'kill'
-            args('-9', pid)
+            setExecutable("kill");
+            args("-9", pid);
         }
-        doLast {
-            fileSystemOperations.delete {
-                it.delete(fixture.pidFile)
-            }
-        }
-        this.fixture = fixture
+        doLast(t -> fileSystemOperations.delete(ops -> ops.delete(fixture.getPidFile()) ));
+        this.fixture = fixture;
     }
 }
