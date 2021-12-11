@@ -10,6 +10,7 @@ package org.elasticsearch.gradle.internal.test;
 
 import org.apache.tools.ant.taskdefs.condition.Os;
 import org.elasticsearch.gradle.LoggedExec;
+import org.elasticsearch.gradle.internal.test.AntFixture;
 import org.elasticsearch.gradle.internal.FixtureStop;
 import org.gradle.api.file.FileSystemOperations;
 import org.gradle.api.tasks.Internal;
@@ -31,7 +32,7 @@ class AntFixtureStop extends LoggedExec implements FixtureStop {
         this.fileSystemOperations = fileSystemOperations;
     }
 
-    void setFixture(AntFixture fixture) {
+    final void setFixture(AntFixture fixture) {
         assert this.fixture == null;
         this.fixture = fixture;
         onlyIf( task -> fixture.getPidFile().exists() );
